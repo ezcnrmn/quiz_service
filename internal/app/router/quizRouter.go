@@ -47,6 +47,8 @@ func (qr *QuizRouter) MainRoute(writer http.ResponseWriter, req *http.Request) {
 
 func (qr *QuizRouter) QuizListRoute(writer http.ResponseWriter, req *http.Request) {
 	switch req.Method {
+	case http.MethodOptions:
+		return
 	case http.MethodGet:
 		quiz, err := qr.controller.GetAllQuizzes()
 		if err != nil {
@@ -98,6 +100,8 @@ func (qr *QuizRouter) QuizRoute(writer http.ResponseWriter, req *http.Request) {
 	id := strings.TrimPrefix(req.URL.Path, "/quiz/")
 
 	switch req.Method {
+	case http.MethodOptions:
+		return
 	case http.MethodGet:
 		quiz, err := qr.controller.GetQuiz(id)
 		if err != nil {

@@ -26,15 +26,32 @@ func (s *Service) CreateFolder() {
 	_ = os.Mkdir(consts.FOLDER_NAME, 0666)
 }
 
-func (s *Service) GetQuizzesList() ([]string, error) {
-	entries, err := os.ReadDir(consts.FOLDER_NAME)
+type QuizPreview struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
 
-	quizzes := make([]string, len(entries))
-	for i, entry := range entries {
-		quizzes[i] = entry.Name()
+func (s *Service) GetQuizzesList() ([]QuizPreview, error) {
+	entries, err := os.ReadDir(consts.FOLDER_NAME)
+	if err != nil {
+		return []QuizPreview{}, err
 	}
 
-	return quizzes, err
+	quizzes := make([]QuizPreview, len(entries))
+
+	for i, entry := range entries {
+		quiz, err := s.LoadQuiz(entry.Name())
+		if err != nil {
+			return []QuizPreview{}, err
+		}
+
+		quizzes[i] = QuizPreview{
+			Id:   quiz.Id,
+			Name: quiz.Name,
+		}
+	}
+
+	return quizzes, nil
 }
 
 func (s *Service) LoadQuiz(fileName string) (quiz model.Quiz, err error) {
@@ -56,24 +73,30 @@ func (s *Service) LoadQuiz(fileName string) (quiz model.Quiz, err error) {
 	return quiz, nil
 }
 
-func (s *Service) LoadAllQuizzes() ([]model.Quiz, error) {
-	entries, err := os.ReadDir(consts.FOLDER_NAME)
+type QuizWithoutAnswer struct {
+	Id        string           `json:"id"`
+	Name      string           `json:"name"`
+	Author    string           `json:"author"`
+	Questions []model.Question `json:"questions"`
+}
+
+func (s *Service) LoadQuizWithoutAnswers(fileName string) (quiz QuizWithoutAnswer, err error) {
+	path := path.Join(consts.FOLDER_NAME, fileName)
+
+	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return []model.Quiz{}, err
+		return QuizWithoutAnswer{}, err
 	}
 
-	quizzes := make([]model.Quiz, len(entries))
+	reader := strings.NewReader(string(bytes))
+	decoder := json.NewDecoder(reader)
 
-	for i, entry := range entries {
-		quiz, err := s.LoadQuiz(entry.Name())
-		if err != nil {
-			return []model.Quiz{}, err
-		}
-
-		quizzes[i] = quiz
+	err = decoder.Decode(&quiz)
+	if err != nil {
+		return QuizWithoutAnswer{}, err
 	}
 
-	return quizzes, nil
+	return quiz, nil
 }
 
 func (s *Service) GetNewQuizId() (id string, err error) {

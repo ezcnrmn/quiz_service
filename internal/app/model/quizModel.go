@@ -30,6 +30,6 @@ type Quiz struct {
 	Id        string     `json:"id"`
 	Name      string     `json:"name"`
 	Author    string     `json:"author"`
-	Questions []Question `json:"question"`
+	Questions []Question `json:"questions"`
 	Answers   []string   `json:"answers"`
 }

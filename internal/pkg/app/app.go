@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/ezcnrmn/quiz_service/internal/app/controller"
+	"github.com/ezcnrmn/quiz_service/internal/app/middleware"
 	"github.com/ezcnrmn/quiz_service/internal/app/router"
 	"github.com/ezcnrmn/quiz_service/internal/app/service"
 )
@@ -33,14 +34,17 @@ func New(addr string) (*App, error) {
 	router := router.New(loggers, controller)
 
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/", router.MainRoute)
 	mux.HandleFunc("/quiz", router.QuizListRoute)
 	mux.HandleFunc("/quiz/", router.QuizRoute)
 
+	handler := middleware.AddCorsHeaders(mux)
+
 	server := &http.Server{
 		Addr:     addr,
 		ErrorLog: errorLog,
-		Handler:  mux,
+		Handler:  handler,
 	}
 
 	return &App{

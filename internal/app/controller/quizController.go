@@ -5,13 +5,14 @@ import (
 	"io"
 
 	"github.com/ezcnrmn/quiz_service/internal/app/model"
+	"github.com/ezcnrmn/quiz_service/internal/app/service"
 	"github.com/ezcnrmn/quiz_service/internal/app/utils/consts"
 )
 
 type Service interface {
-	GetQuizzesList() ([]string, error)
-	LoadAllQuizzes() ([]model.Quiz, error)
+	GetQuizzesList() ([]service.QuizPreview, error)
 	LoadQuiz(fileName string) (quiz model.Quiz, err error)
+	LoadQuizWithoutAnswers(fileName string) (quiz service.QuizWithoutAnswer, err error)
 	GetNewQuizId() (id string, err error)
 	SaveQuiz(quiz model.Quiz) (err error)
 	DeleteQuiz(id string) (err error)
@@ -29,7 +30,7 @@ func New(service Service) *QuizController {
 }
 
 func (qc *QuizController) GetQuiz(id string) (bytes []byte, err error) {
-	quiz, err := qc.service.LoadQuiz(id + consts.FILE_EXTENSION)
+	quiz, err := qc.service.LoadQuizWithoutAnswers(id + consts.FILE_EXTENSION)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -82,13 +83,12 @@ func (qc *QuizController) TryQuiz(id string, body io.ReadCloser) (res []byte, er
 }
 
 func (qc *QuizController) GetAllQuizzes() (bytes []byte, err error) {
-	// quizzes, err := loadAllQuizzes()
-	quizzes, err := qc.service.GetQuizzesList()
+	previews, err := qc.service.GetQuizzesList()
 	if err != nil {
 		return []byte{}, err
 	}
 
-	bytes, err = json.Marshal(quizzes)
+	bytes, err = json.Marshal(previews)
 
 	if err != nil {
 		return []byte{}, err
